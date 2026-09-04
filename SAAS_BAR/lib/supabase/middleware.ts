@@ -55,11 +55,23 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Qualquer redirect precisa levar consigo os cookies de sessão que
+  // foram atualizados acima (renovação de token) — criar um
+  // NextResponse.redirect "do zero" descarta esses cookies, o navegador
+  // nunca recebe a sessão renovada, e a próxima requisição volta a achar
+  // que não há sessão válida. Isso causava um loop de redirecionamento
+  // infinito (ERR_TOO_MANY_REDIRECTS).
+  function redirectTo(path: string) {
+    const target = NextResponse.redirect(new URL(path, request.url));
+    response.cookies.getAll().forEach((cookie) => target.cookies.set(cookie));
+    return target;
+  }
+
   // 1. Sem sessão tentando acessar rota protegida -> redireciona para /login
   if (!user && !isPublicRoute(pathname)) {
     const redirectUrl = new URL("/login", request.url);
     redirectUrl.searchParams.set("redirectedFrom", pathname);
-    return NextResponse.redirect(redirectUrl);
+    return redirectTo(`${redirectUrl.pathname}${redirectUrl.search}`);
   }
 
   // 2. Sem sessão e acessando rota pública (como /login) -> libera o acesso sem redirecionar
@@ -81,17 +93,17 @@ export async function updateSession(request: NextRequest) {
   // 3. Com sessão acessando /login ou '/' -> vai para a tela principal
   if (pathname === "/" || pathname.startsWith("/login")) {
     if (isPlatformAdmin) {
-      return NextResponse.redirect(new URL("/superadmin", request.url));
+      return redirectTo("/superadmin");
     }
     const defaultRoute = role ? ROLE_HOME[role] : "/nao-autorizado";
-    return NextResponse.redirect(new URL(defaultRoute, request.url));
+    return redirectTo(defaultRoute);
   }
 
   // 4. /superadmin é exclusivo de platform_admins — nem ADMIN de tenant
   // entra aqui.
   if (pathname.startsWith("/superadmin")) {
     if (!isPlatformAdmin) {
-      return NextResponse.redirect(new URL("/nao-autorizado", request.url));
+      return redirectTo("/nao-autorizado");
     }
     return response;
   }
@@ -100,7 +112,7 @@ export async function updateSession(request: NextRequest) {
   const requiredRoles = getRequiredRoles(pathname);
   if (requiredRoles) {
     if (!role || !requiredRoles.includes(role)) {
-      return NextResponse.redirect(new URL("/nao-autorizado", request.url));
+      return redirectTo("/nao-autorizado");
     }
   }
 
