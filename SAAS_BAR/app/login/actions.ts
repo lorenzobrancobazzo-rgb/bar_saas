@@ -8,8 +8,6 @@ export type LoginState = {
   error: string | null;
 };
 
-export const initialLoginState: LoginState = { error: null };
-
 /**
  * Server Action chamada pelo formulário de login (via useActionState).
  * Em caso de sucesso, redireciona para a home — o middleware.ts cuida do

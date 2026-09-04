@@ -2,7 +2,9 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { login, initialLoginState } from "./actions";
+import { login, type LoginState } from "./actions";
+
+const initialLoginState: LoginState = { error: null };
 
 function SubmitButton() {
   const { pending } = useFormStatus();
