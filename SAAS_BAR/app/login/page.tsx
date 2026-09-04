@@ -1,51 +1,29 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/lib/supabase/types";
+import { LoginForm } from "./login-form";
 
-type UserRole = Database["public"]["Enums"]["user_role"];
+export default function LoginPage() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0F1210] px-4">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center gap-3 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E8791A]">
+            <svg width="24" height="24" viewBox="0 0 200 200" fill="none">
+              <path
+                d="M62 110 L90 138 L140 76"
+                stroke="#F5F3EE"
+                strokeWidth="20"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-[#F5F3EE]">comando</h1>
+          <p className="text-sm text-[#8B948C]">Entre com sua conta para continuar</p>
+        </div>
 
-// Mesmo destino por role usado no RBAC do middleware.ts — mantenha os dois
-// sincronizados caso os nomes de rota mudem.
-const ROLE_HOME: Record<UserRole, string> = {
-  ADMIN: "/admin",
-  CASHIER: "/pdv",
-  KITCHEN: "/kds",
-  WAITER: "/comanda",
-};
-
-/**
- * A rota "/" nunca renderiza UI própria — ela apenas resolve para onde o
- * usuário deve ir com base na sessão e na role. O middleware.ts já bloqueia
- * acesso não autenticado a rotas protegidas, mas fazemos a checagem aqui
- * também (defesa em profundidade) já que Server Components podem ser
- * alcançados por outros caminhos de navegação.
- */
-export default async function RootPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: profile, error } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (error || !profile?.role) {
-    // Usuário autenticado no Supabase Auth mas sem registro em public.users
-    // (ex: convite pendente de vínculo a um tenant) — não há para onde
-    // roteá-lo com segurança.
-    redirect("/nao-autorizado");
-  }
-
-  const role = profile.role as UserRole;
-  const destination = ROLE_HOME[role];
-
-  redirect(destination);
+        <div className="rounded-xl border border-[#262B25] bg-[#171B18] p-6">
+          <LoginForm />
+        </div>
+      </div>
+    </div>
+  );
 }
