@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/supabase/types";
 import { getSupabaseUrl, getSupabaseAnonKey } from "@/lib/supabase/env";
 
-const PUBLIC_ROUTES = ["/login", "/auth/callback", "/nao-autorizado"];
+const PUBLIC_ROUTES = ["/", "/login", "/auth/callback", "/nao-autorizado"];
 
 const ROUTE_ACCESS: { prefix: string; roles: Database["public"]["Enums"]["user_role"][] }[] = [
   { prefix: "/admin", roles: ["ADMIN"] },

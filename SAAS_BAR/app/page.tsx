@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
+import { LandingPage } from "@/components/landing-page";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
 
@@ -14,11 +15,11 @@ const ROLE_HOME: Record<UserRole, string> = {
 };
 
 /**
- * A rota "/" nunca renderiza UI própria — ela apenas resolve para onde o
- * usuário deve ir com base na sessão e na role. O middleware.ts já bloqueia
- * acesso não autenticado a rotas protegidas, mas fazemos a checagem aqui
- * também (defesa em profundidade) já que Server Components podem ser
- * alcançados por outros caminhos de navegação.
+ * "/" é a landing page pública para quem não está logado — e só faz
+ * roteamento por role para quem já tem sessão. O middleware.ts já trata
+ * "/" como rota pública; fazemos a checagem aqui também (defesa em
+ * profundidade) já que Server Components podem ser alcançados por outros
+ * caminhos de navegação.
  */
 export default async function RootPage() {
   const supabase = await createClient();
@@ -28,7 +29,7 @@ export default async function RootPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    return <LandingPage />;
   }
 
   const { data: platformAdmin } = await supabase
